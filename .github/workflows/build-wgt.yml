@@ -1,0 +1,91 @@
+name: Build Tizen WGT
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-wgt:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip unzip expect
+
+      - name: Install Tizen Studio 6.1 Web CLI
+        run: |
+          curl -fSL -o /tmp/tizen-cli.bin "https://download.tizen.org/sdk/Installer/tizen-studio_6.1/web-cli_Tizen_Studio_6.1_ubuntu-64.bin"
+          chmod +x /tmp/tizen-cli.bin
+          /tmp/tizen-cli.bin --accept-license "$HOME/tizen-studio"
+          ls -la "$HOME/tizen-studio/tools/ide/bin/tizen"
+
+      - name: Generate Certificate & Security Profile
+        run: |
+          TIZEN="$HOME/tizen-studio/tools/ide/bin/tizen"
+          "$TIZEN" certificate -a ManiFlixTizen -p "ManiFlix2026" -c VN -s HCM -ct HCM -o ManiFlix -u Dev -n Maniakov -e admin@maniakov.bond -f maniflix_author
+          ls -la "$HOME/tizen-studio-data/keystore/author/"
+          "$TIZEN" security-profiles add -n ManiFlixProfile -a "$HOME/tizen-studio-data/keystore/author/maniflix_author.p12" -p "ManiFlix2026"
+
+      - name: Package WGT with Tizen CLI
+        run: |
+          TIZEN="$HOME/tizen-studio/tools/ide/bin/tizen"
+          rm -rf /tmp/wgt-src dist
+          mkdir -p /tmp/wgt-src dist
+          cp config.xml icon.png index.html /tmp/wgt-src/
+          cp -r css js /tmp/wgt-src/
+          "$TIZEN" package -t wgt -s ManiFlixProfile -o dist -- /tmp/wgt-src
+          WGT_FILE=$(find dist -maxdepth 1 -name "*.wgt" | head -n 1)
+          test -n "$WGT_FILE"
+          if [ "$WGT_FILE" != "dist/ManiFlix-Tizen.wgt" ]; then
+            mv "$WGT_FILE" dist/ManiFlix-Tizen.wgt
+          fi
+          ls -lh dist/ManiFlix-Tizen.wgt
+
+      - name: Verify WGT contents and signatures
+        run: |
+          python3 - << 'EOF'
+          import zipfile
+          path = "dist/ManiFlix-Tizen.wgt"
+          with zipfile.ZipFile(path, "r") as zf:
+              names = set(zf.namelist())
+              required = ["config.xml", "index.html", "icon.png", "author-signature.xml", "signature1.xml"]
+              missing = [r for r in required if r not in names]
+              print("WGT entry count:", len(names))
+              print("Required check:", {r: (r in names) for r in required})
+              assert not missing, f"Missing required WGT entries: {missing}"
+              assert "js/hls.min.js" in names, "Missing js/hls.min.js"
+              assert "css/tv.css" in names, "Missing css/tv.css"
+              assert "js/app.js" in names, "Missing js/app.js"
+          EOF
+
+      - name: Upload WGT artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ManiFlix-Tizen-wgt
+          path: dist/ManiFlix-Tizen.wgt
+
+      - name: Publish GitHub Release v1.1.0
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.1.0
+          name: ManiFlix Samsung Tizen TV v1.1.0
+          make_latest: true
+          files: dist/ManiFlix-Tizen.wgt
+          body: |
+            ManiFlix v1.1.0 cho Samsung Smart TV (Tizen OS 4.0 - 8.0), tối ưu 60fps.
+            - Package ID: `ManiFlixTV.ManiFlix`
+            - Tệp cài đặt: `ManiFlix-Tizen.wgt` (đã ký author & distributor signature)
