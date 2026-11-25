@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y zip unzip expect
+          sudo apt-get install -y zip unzip expect gnome-keyring libsecret-tools dbus-x11
 
       - name: Install Tizen Studio 6.1 Web CLI
         run: |
@@ -33,34 +33,31 @@ jobs:
           /tmp/tizen-cli.bin --accept-license "$HOME/tizen-studio"
           ls -la "$HOME/tizen-studio/tools/ide/bin/tizen"
 
-      - name: Generate Certificate & Security Profile
+      - name: Generate Certificate, Profile & Package WGT
         run: |
-          TIZEN="$HOME/tizen-studio/tools/ide/bin/tizen"
-          "$TIZEN" certificate -a ManiFlixTizen -p "ManiFlix2026" -c VN -s HCM -ct HCM -o ManiFlix -u Dev -n Maniakov -e admin@maniakov.bond -f maniflix_author
-          ls -la "$HOME/tizen-studio-data/keystore/author/"
-          "$TIZEN" security-profiles add -n ManiFlixProfile -a "$HOME/tizen-studio-data/keystore/author/maniflix_author.p12" -p "ManiFlix2026"
-          "$TIZEN" cli-config "profiles.path=$HOME/tizen-studio-data/profile/profiles.xml"
-          "$TIZEN" cli-config "default.profiles.path=$HOME/tizen-studio-data/profile/profiles.xml" || true
-          "$TIZEN" cli-config -l
-
-      - name: Package WGT with Tizen CLI
-        run: |
-          TIZEN="$HOME/tizen-studio/tools/ide/bin/tizen"
           rm -rf /tmp/wgt-src dist
           mkdir -p /tmp/wgt-src dist
           cp config.xml icon.png index.html /tmp/wgt-src/
           cp -r css js /tmp/wgt-src/
-          if ! "$TIZEN" package -t wgt -s ManiFlixProfile -o "$PWD/dist" -- /tmp/wgt-src; then
-            echo "=== Direct package failed, checking cli.log ==="
-            tail -n 60 "$HOME/tizen-studio-data/cli/logs/cli.log" || true
-            echo "=== Retrying via tizen build-web ==="
-            printf '%s\n' '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' '<tproject xmlns="http://www.tizen.org/tproject">' '  <platforms><platform><name>tv-samsung</name></platform></platforms>' '</tproject>' > /tmp/wgt-src/.tproject
-            "$TIZEN" build-web -out .buildResult -- /tmp/wgt-src
-            "$TIZEN" package -t wgt -s ManiFlixProfile -o "$PWD/dist" -- /tmp/wgt-src/.buildResult || {
-              tail -n 80 "$HOME/tizen-studio-data/cli/logs/cli.log" || true
+
+          dbus-run-session -- bash -e -c '
+            eval "$(printf "ManiFlix2026\n" | gnome-keyring-daemon --unlock || true)"
+            eval "$(gnome-keyring-daemon --start --components=secrets || true)"
+            export GNOME_KEYRING_CONTROL
+            export DBUS_SESSION_BUS_ADDRESS
+
+            TIZEN="$HOME/tizen-studio/tools/ide/bin/tizen"
+            "$TIZEN" certificate -a ManiFlixTizen -p "ManiFlix2026" -c VN -s HCM -ct HCM -o ManiFlix -u Dev -n Maniakov -e admin@maniakov.bond -f maniflix_author
+            ls -la "$HOME/tizen-studio-data/keystore/author/"
+            "$TIZEN" security-profiles add -n ManiFlixProfile -a "$HOME/tizen-studio-data/keystore/author/maniflix_author.p12" -p "ManiFlix2026"
+            "$TIZEN" cli-config "profiles.path=$HOME/tizen-studio-data/profile/profiles.xml"
+            "$TIZEN" cli-config "default.profiles.path=$HOME/tizen-studio-data/profile/profiles.xml" || true
+            if ! "$TIZEN" package -t wgt -s ManiFlixProfile -o "$PWD/dist" -- /tmp/wgt-src; then
+              tail -n 60 "$HOME/tizen-studio-data/cli/logs/cli.log" || true
               exit 1
-            }
-          fi
+            fi
+          '
+
           WGT_FILE=$(find dist -maxdepth 1 -name "*.wgt" | head -n 1)
           test -n "$WGT_FILE"
           if [ "$WGT_FILE" != "dist/ManiFlix-Tizen.wgt" ]; then
