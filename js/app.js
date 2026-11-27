@@ -4,7 +4,7 @@
   const API_BASE = 'https://phim.maniakov.bond';
   const CF_DOWN = 'https://speed.cloudflare.com/__down';
   const CF_UP = 'https://speed.cloudflare.com/__up';
-  const APP_VERSION = '1.2.0';
+  const APP_VERSION = '1.2.1';
   const APP_PKG_ID = 'ManiFlixTV.ManiFlix';
 
   const TIZEN_REGISTER_KEYS = [
@@ -1722,6 +1722,20 @@
       if (nextIdx >= tracks.length) nextIdx = -1;
       hls.subtitleTrack = nextIdx;
       hls.subtitleDisplay = nextIdx >= 0;
+          if (video && video.textTracks) {
+            const idx = hls.subtitleTrack;
+            const trk = (idx >= 0 && hls.subtitleTracks) ? hls.subtitleTracks[idx] : null;
+            const aL = trk ? String(trk.lang || '').toLowerCase() : '';
+            const aN = trk ? String(trk.name || '').toLowerCase() : '';
+            for (let i = 0; i < video.textTracks.length; i++) {
+              const tt = video.textTracks[i];
+              if (tt.kind !== 'subtitles' && tt.kind !== 'captions') continue;
+              if (idx < 0) { tt.mode = 'disabled'; continue; }
+              const tL = String(tt.language || '').toLowerCase();
+              const tN = String(tt.label || '').toLowerCase();
+              tt.mode = ((tL && aL && (tL === aL || tL.indexOf(aL.slice(0, 2)) === 0)) || (tN && aN && tN === aN) || video.textTracks.length === 1) ? 'showing' : 'hidden';
+            }
+          }
       const lbl = nextIdx >= 0 ? (tracks[nextIdx].name || tracks[nextIdx].lang || 'Sub') : tr('Tắt', 'Off');
       document.getElementById('btnPlayerSub').textContent = tr('Phụ đề: ', 'Sub: ') + lbl;
       showHud(true);
