@@ -4,7 +4,7 @@
   const API_BASE = 'https://phim.maniakov.bond';
   const CF_DOWN = 'https://speed.cloudflare.com/__down';
   const CF_UP = 'https://speed.cloudflare.com/__up';
-  const APP_VERSION = '2.0.0';
+  const APP_VERSION = '2.0.1';
   const APP_PKG_ID = 'ManiFlixTV.ManiFlix';
 
   const TIZEN_REGISTER_KEYS = [
