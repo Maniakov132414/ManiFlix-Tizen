@@ -88,14 +88,14 @@ jobs:
           name: ManiFlix-Tizen-wgt
           path: dist/ManiFlix-Tizen.wgt
 
-      - name: Publish GitHub Release v1.1.0
+      - name: Publish GitHub Release v1.2.0
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.1.0
-          name: ManiFlix Samsung Tizen TV v1.1.0
+          tag_name: v1.2.0
+          name: ManiFlix Samsung Tizen TV v1.2.0
           make_latest: true
           files: dist/ManiFlix-Tizen.wgt
           body: |
-            ManiFlix v1.1.0 cho Samsung Smart TV (Tizen OS 4.0 - 8.0), tối ưu 60fps.
+            ManiFlix v1.2.0 cho Samsung Smart TV (Tizen OS 4.0 - 8.0), tối ưu 60fps.
             - Package ID: `ManiFlixTV.ManiFlix`
             - Tệp cài đặt: `ManiFlix-Tizen.wgt` (đã ký author & distributor signature)
