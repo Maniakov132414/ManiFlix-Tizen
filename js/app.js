@@ -4,7 +4,7 @@
   const API_BASE = 'https://phim.maniakov.bond';
   const CF_DOWN = 'https://speed.cloudflare.com/__down';
   const CF_UP = 'https://speed.cloudflare.com/__up';
-  const APP_VERSION = '1.2.1';
+  const APP_VERSION = '2.0.0';
   const APP_PKG_ID = 'ManiFlixTV.ManiFlix';
 
   const TIZEN_REGISTER_KEYS = [
@@ -1555,6 +1555,7 @@
       if (window.Hls && window.Hls.isSupported()) {
         hls = new window.Hls({
           enableWorker: true,
+          startFragPrefetch: true,
           subtitleDisplay: true,
           maxBufferLength: 24,
           maxMaxBufferLength: 45,
