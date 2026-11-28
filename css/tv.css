@@ -501,6 +501,8 @@ body:not(.ultra-smooth) .tv-focus {
   text-align: left;
   color: var(--text-primary);
   contain: layout paint;
+  content-visibility: auto;
+  contain-intrinsic-size: 210px 340px;
 }
 
 /* 2:3 ratio compatible with all Tizen Chromium versions */
@@ -677,6 +679,8 @@ body:not(.ultra-smooth) .tv-focus {
   font-weight: 700;
   cursor: pointer;
   contain: layout paint;
+  content-visibility: auto;
+  contain-intrinsic-size: 112px 50px;
 }
 .ep-btn.active {
   border-color: var(--accent);

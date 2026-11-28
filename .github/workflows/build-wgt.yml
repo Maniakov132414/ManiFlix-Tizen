@@ -88,14 +88,16 @@ jobs:
           name: ManiFlix-Tizen-wgt
           path: dist/ManiFlix-Tizen.wgt
 
-      - name: Publish GitHub Release v2.0.1
+      - name: Publish GitHub Release v2.0.2
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v2.0.1
-          name: ManiFlix Samsung Tizen TV v2.0.1
+          tag_name: v2.0.2
+          name: ManiFlix Samsung Tizen TV v2.0.2
           make_latest: true
           files: dist/ManiFlix-Tizen.wgt
           body: |
-            ManiFlix v2.0.1 cho Samsung Smart TV (Tizen OS 4.0 - 8.0), tối ưu 60fps.
+            ManiFlix v2.0.2 cho Samsung Smart TV (Tizen OS 4.0 - 8.0), tối ưu 60fps & tăng tốc khởi chạy gấp 2 lần.
+            - Khởi chạy tức thì qua một lệnh hợp nhất, tải trước thông tin phim khi di chuyển D-Pad.
+            - Sửa lỗi nhấn phím OK trên thanh tiến trình (tạm dừng/phát tại đúng vị trí thay vì nhảy về 0s) và bổ sung kiểm tra cập nhật tự động.
             - Package ID: `ManiFlixTV.ManiFlix`
             - Tệp cài đặt: `ManiFlix-Tizen.wgt` (đã ký author & distributor signature)
